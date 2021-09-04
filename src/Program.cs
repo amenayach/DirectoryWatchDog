@@ -1,5 +1,6 @@
 ﻿using DirectoryWatchDog.FunctionslTools;
 using System;
+using System.IO;
 
 namespace DirectoryWatchDog
 {
@@ -73,7 +74,7 @@ namespace DirectoryWatchDog
 
             Console.WriteLine("Press enter to exit watch mode");
 
-            var result = DirectoryManager.WatchDirectoryFP(directoryPath, PrintFile, () => Console.ReadLine());
+            var result = DirectoryManager.WatchDirectoryFP(directoryPath, PrintFileChange, () => Console.ReadLine());
 
             $"{result.Sucess} - {result.ErrorValue}".Print(ConsoleColor.Yellow);
         }
@@ -84,7 +85,10 @@ namespace DirectoryWatchDog
             return Console.ReadLine();
         }
 
-        private static void PrintFile(System.IO.FileInfo fileInfo) =>
+        private static void PrintFile(FileInfo fileInfo) =>
             $"{fileInfo.Name} - {fileInfo.CreationTime} - {fileInfo.Length}bytes".Print(ConsoleColor.Yellow);
+        
+        private static void PrintFileChange(FileInfo fileInfo, WatcherChangeTypes changeType) =>
+            $"{fileInfo.Name} - {changeType} - {fileInfo.CreationTime} - {fileInfo.Length}bytes".Print(ConsoleColor.Yellow);
     }
 }

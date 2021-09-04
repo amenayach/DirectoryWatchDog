@@ -84,7 +84,7 @@ namespace DirectoryWatchDog
             return Result<string, IEnumerable<FileInfo>>.Ok(files);
         }
 
-        public static Result<string, bool> WatchDirectory(string path, Action<FileInfo> onChange, Action existWatchMode)
+        public static Result<string, bool> WatchDirectory(string path, Action<FileInfo, WatcherChangeTypes> onChange, Action existWatchMode)
         {
             if (path.IsEmpty())
             {
@@ -176,17 +176,17 @@ namespace DirectoryWatchDog
 
         /************************** WatchDirectoryFP ************************/
 
-        public static Result<string, bool> WatchDirectoryFP(string path, Action<FileInfo> onChange, Action existWatchMode) =>
+        public static Result<string, bool> WatchDirectoryFP(string path, Action<FileInfo, WatcherChangeTypes> onChange, Action existWatchMode) =>
             DirNotEmpty(path)
             .Bind(DirExists)
             .Tee(m => RunWatcher(path, onChange, existWatchMode))
             .Map(PathToBoolResult);
 
-        private static void RunWatcher(string path, Action<FileInfo> onChange, Action existWatchMode)
+        private static void RunWatcher(string path, Action<FileInfo, WatcherChangeTypes> onChange, Action existWatchMode)
         {
             void change(object sender, FileSystemEventArgs e)
             {
-                onChange(new FileInfo(e.FullPath));
+                onChange(new FileInfo(e.FullPath), e.ChangeType);
             }
 
             var watcher = new FileSystemWatcher(path)
@@ -208,7 +208,7 @@ namespace DirectoryWatchDog
                 watcher.Changed += change;
                 watcher.Renamed += (object sender, RenamedEventArgs e) =>
                 {
-                    onChange(new FileInfo(e.FullPath));
+                    onChange(new FileInfo(e.FullPath), e.ChangeType);
                 };
 
                 existWatchMode();
