@@ -75,15 +75,9 @@ namespace DirectoryWatchDog
         {
             var filePath = ReadInput("Please enter file path:");
 
-            if (filePath.NotEmpty() && File.Exists(filePath))
-            {
-                File.Delete(filePath);
-                $"{filePath} deleted".Print();
-            }
-            else
-            {
-                "Invalid input".Print();
-            }
+            var result = DirectoryManager.DeleteFileFP(filePath);
+
+            $"{result.Sucess} - {result.ErrorValue}".Print(ConsoleColor.Yellow);
         }
 
         static void WatchDirectory()

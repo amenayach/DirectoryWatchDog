@@ -84,6 +84,23 @@ namespace DirectoryWatchDog
             return Result<string, IEnumerable<FileInfo>>.Ok(files);
         }
 
+        public static Result<string, bool> DeleteFile(string filePath)
+        {
+            if (filePath.IsEmpty())
+            {
+                return "Empty file path".Failure<string, bool>();
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return "File not found".Failure<string, bool>();
+            }
+
+            File.Delete(filePath);
+
+            return Result<string, bool>.Ok(true);
+        }
+
         public static Result<string, bool> WatchDirectory(string path, Action<FileInfo, WatcherChangeTypes> onChange, Action existWatchMode)
         {
             if (path.IsEmpty())
@@ -97,35 +114,6 @@ namespace DirectoryWatchDog
             }
 
             RunWatcher(path, onChange, existWatchMode);
-
-            //using (var watcher = new FileSystemWatcher(path))
-            //{
-            //    watcher.NotifyFilter = NotifyFilters.Attributes
-            //                     | NotifyFilters.CreationTime
-            //                     | NotifyFilters.DirectoryName
-            //                     | NotifyFilters.FileName
-            //                     | NotifyFilters.LastAccess
-            //                     | NotifyFilters.LastWrite
-            //                     | NotifyFilters.Security
-            //                     | NotifyFilters.Size;
-
-            //    void change(object sender, FileSystemEventArgs e)
-            //    {
-            //        onChange(new FileInfo(e.FullPath));
-            //    }
-
-            //    watcher.Created += change;
-            //    watcher.Changed += change;
-
-            //    watcher.Renamed += (object sender, RenamedEventArgs e) =>
-            //    {
-            //        onChange(new FileInfo(e.FullPath));
-            //    };
-
-            //    watcher.EnableRaisingEvents = true;
-
-            //    existWatchMode();
-            //}
 
             return true.Ok<string, bool>();
         }
@@ -173,6 +161,14 @@ namespace DirectoryWatchDog
             DirNotEmpty(path)
             .Bind(DirExists)
             .MapResult(m => Directory.GetFiles(path).Select(p => new FileInfo(p)).Ok<string, IEnumerable<FileInfo>>());
+
+        /************************** DeleteFileFP ************************/
+
+        public static Result<string, bool> DeleteFileFP(string filePath) =>
+            DirNotEmpty(filePath)
+            .Bind(m => Result<string, string>.Of(File.Exists(filePath), filePath, "File not found"))
+            .Tee(m => File.Delete(filePath))
+            .Map(PathToBoolResult);
 
         /************************** WatchDirectoryFP ************************/
 
