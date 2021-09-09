@@ -90,8 +90,7 @@ namespace DirectoryWatchDog
         private static void PrintFile(FileInfo fileInfo)
         {
             var firstBytes = ReadBytes(fileInfo, 10);
-            var firstBytesText = firstBytes.NotEmpty() ?
-                string.Join(' ', firstBytes.Select(b => b.ToString())) : string.Empty;
+            var firstBytesText = firstBytes.NotEmpty() ? string.Join(' ', firstBytes) : string.Empty;
             $"{fileInfo.Name} - {fileInfo.CreationTime} - {fileInfo.Length}bytes - First bytes: {firstBytesText}".Print(ConsoleColor.Yellow);
         }
 
