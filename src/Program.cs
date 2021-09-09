@@ -19,6 +19,7 @@ namespace DirectoryWatchDog
                         ("CopyFileToDirectory", CopyFileToDirectory),
                         ("ReadFilesFromDirectory", ReadFilesFromDirectory),
                         ("WatchDirectory", WatchDirectory),
+                        ("DeleteFile", DeleteFile),
                         ("Exit", () => { exit = true; }
                 )
                     );
@@ -68,6 +69,21 @@ namespace DirectoryWatchDog
             {
                 foreach (var fileInfo in m.Value) PrintFile(fileInfo);
             });
+        }
+
+        static void DeleteFile()
+        {
+            var filePath = ReadInput("Please enter file path:");
+
+            if (filePath.NotEmpty() && File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                $"{filePath} deleted".Print();
+            }
+            else
+            {
+                "Invalid input".Print();
+            }
         }
 
         static void WatchDirectory()
