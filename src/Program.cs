@@ -1,6 +1,7 @@
 ﻿using DirectoryWatchDog.FunctionslTools;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace DirectoryWatchDog
 {
@@ -18,7 +19,8 @@ namespace DirectoryWatchDog
                         ("CopyFileToDirectory", CopyFileToDirectory),
                         ("ReadFilesFromDirectory", ReadFilesFromDirectory),
                         ("WatchDirectory", WatchDirectory),
-                        ("Exit", () => { exit = true; })
+                        ("Exit", () => { exit = true; }
+                )
                     );
             }
         }
@@ -85,9 +87,27 @@ namespace DirectoryWatchDog
             return Console.ReadLine();
         }
 
-        private static void PrintFile(FileInfo fileInfo) =>
-            $"{fileInfo.Name} - {fileInfo.CreationTime} - {fileInfo.Length}bytes".Print(ConsoleColor.Yellow);
-        
+        private static void PrintFile(FileInfo fileInfo)
+        {
+            var firstBytes = ReadBytes(fileInfo, 10);
+            var firstBytesText = firstBytes.NotEmpty() ?
+                string.Join(' ', firstBytes.Select(b => b.ToString())) : string.Empty;
+            $"{fileInfo.Name} - {fileInfo.CreationTime} - {fileInfo.Length}bytes - First bytes: {firstBytesText}".Print(ConsoleColor.Yellow);
+        }
+
+        private static byte[] ReadBytes(FileInfo fileInfo, int limit)
+        {
+            var byteLimit = (int)Math.Min(fileInfo.Length, limit);
+            var bytes = new byte[byteLimit];
+
+            using (var reader = new BinaryReader(new FileStream(fileInfo.FullName, FileMode.Open)))
+            {
+                reader.Read(bytes, 0, byteLimit);
+            }
+
+            return bytes;
+        }
+
         private static void PrintFileChange(FileInfo fileInfo, WatcherChangeTypes changeType) =>
             $"{fileInfo.Name} - {changeType} - {fileInfo.CreationTime} - {fileInfo.Length}bytes".Print(ConsoleColor.Yellow);
     }
