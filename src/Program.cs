@@ -99,7 +99,8 @@ namespace DirectoryWatchDog
             var byteLimit = (int)Math.Min(fileInfo.Length, limit);
             var bytes = new byte[byteLimit];
 
-            using (var reader = new BinaryReader(new FileStream(fileInfo.FullName, FileMode.Open)))
+            using (var fileStream = new FileStream(fileInfo.FullName, FileMode.Open))
+            using (var reader = new BinaryReader(fileStream))
             {
                 reader.Read(bytes, 0, byteLimit);
             }
