@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace DirectoryWatchDog.FunctionslTools
 {
@@ -44,6 +43,9 @@ namespace DirectoryWatchDog.FunctionslTools
 
         public static Result<Error, T> Bind<Error, T>(this Result<Error, T> result, Func<T, Result<Error, T>> func) =>
             result.Sucess ? func(result.Value) : result;
+
+        public static Result<Error, TResult> BindTo<Error, T, TResult>(this Result<Error, T> result, Func<T, Result<Error, TResult>> func) =>
+            result.Sucess ? func(result.Value) : Result<Error, TResult>.Failure(result.ErrorValue);
 
         public static Result<Error, T> Ok<Error, T>(this T value) => Result<Error, T>.Ok(value);
 

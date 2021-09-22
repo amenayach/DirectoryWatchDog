@@ -37,5 +37,10 @@
             "================================================".Print(ConsoleColor.Blue);
             Console.WriteLine();
         }
+
+        internal static void RunAsync(object p1, object p2, object p3, object p4, object p5, object p6, (string, object) p7, object p8)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

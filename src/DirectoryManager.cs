@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace DirectoryWatchDog
 {
@@ -120,63 +122,73 @@ namespace DirectoryWatchDog
 
         /************************** FP Helpers ************************/
 
-        private static Result<string, bool> PathToBoolResult(Result<string, string> result) =>
+        private static Result<string, bool> ToBoolResult<T>(Result<string, T> result) =>
             Result<string, bool>.Of(result.Sucess, result.Sucess, result.ErrorValue);
 
         private static Result<string, string> DirExists(string path) =>
             Result<string, string>.Of(Directory.Exists(path), path, "Directory not found");
 
-        private static Result<string, string> DirNotEmpty(string path) =>
+        private static Result<string, string> NotEmpty(string path) =>
             Result<string, string>.Of(path.SafeTrim().NotEmpty(), path, "Empty path");
 
         /************************** DoDirectoryExistsFP ************************/
 
         public static Result<string, bool> DoDirectoryExistsFP(string path) =>
-            DirNotEmpty(path)
+            NotEmpty(path)
             .Bind(DirExists)
-            .Map(PathToBoolResult);
+            .Map(ToBoolResult);
 
         /************************** CreateDirectoryFP ************************/
 
         public static Result<string, bool> CreateDirectoryFP(string path) =>
-            DirNotEmpty(path)
+            NotEmpty(path)
             .Bind(m => Result<string, string>.Of(!Directory.Exists(path), path, "Already exists"))
             .Tee(m => Directory.CreateDirectory(m))
-            .Map(PathToBoolResult);
+            .Map(ToBoolResult);
 
 
         /************************** CopyFileToDirectoryFP ************************/
 
         public static Result<string, bool> CopyFileToDirectoryFP(string filePath, string directoryPath) =>
-            DirNotEmpty(directoryPath)
+            NotEmpty(directoryPath)
             .Bind(m => Result<string, string>.Of(File.Exists(filePath), filePath, "File not found"))
-            .Bind(m => DirNotEmpty(filePath))
+            .Bind(m => NotEmpty(filePath))
             .Bind(m => DirExists(directoryPath))
             .Tee(m => File.Copy(filePath, Path.Combine(directoryPath, new FileInfo(filePath).Name)))
-            .Map(PathToBoolResult);
+            .Map(ToBoolResult);
+
+        /************************** DownloadThenWiteToDirectoryFP ************************/
+
+        public static Result<string, bool> DownloadThenWriteToDirectoryFP(string url, string fileName, string directoryPath) =>
+            NotEmpty(directoryPath)
+            .Bind(m => NotEmpty(fileName))
+            .Bind(m => DirExists(directoryPath))
+            .BindTo(m => DownloadFromUrl(url))
+            .Tee(m => File.WriteAllBytes(Path.Combine(directoryPath, new FileInfo(fileName).Name), m))
+            .Map(ToBoolResult);
 
         /************************** ReadFilesFromDirectoryFP ************************/
 
         public static Result<string, IEnumerable<FileInfo>> ReadFilesFromDirectoryFP(string path) =>
-            DirNotEmpty(path)
+            NotEmpty(path)
             .Bind(DirExists)
             .MapResult(m => Directory.GetFiles(path).Select(p => new FileInfo(p)).Ok<string, IEnumerable<FileInfo>>());
 
         /************************** DeleteFileFP ************************/
 
         public static Result<string, bool> DeleteFileFP(string filePath) =>
-            DirNotEmpty(filePath)
+            NotEmpty(filePath)
             .Bind(m => Result<string, string>.Of(File.Exists(filePath), filePath, "File not found"))
             .Tee(m => File.Delete(filePath))
-            .Map(PathToBoolResult);
+            .Map(ToBoolResult);
 
         /************************** WatchDirectoryFP ************************/
 
         public static Result<string, bool> WatchDirectoryFP(string path, Action<FileInfo, WatcherChangeTypes> onChange, Action existWatchMode) =>
-            DirNotEmpty(path)
+            NotEmpty(path)
             .Bind(DirExists)
             .Tee(m => RunWatcher(path, onChange, existWatchMode))
-            .Map(PathToBoolResult);
+            .Map(ToBoolResult);
 
         private static void RunWatcher(string path, Action<FileInfo, WatcherChangeTypes> onChange, Action existWatchMode)
         {
@@ -208,6 +220,15 @@ namespace DirectoryWatchDog
                 };
 
                 existWatchMode();
+            }
+        }
+
+        private static Result<string, byte[]> DownloadFromUrl(string url)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var bytes = httpClient.GetByteArrayAsync(url).GetAwaiter().GetResult();
+                return bytes.Ok<string, byte[]>();
             }
         }
     }

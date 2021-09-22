@@ -20,6 +20,7 @@ namespace DirectoryWatchDog
                         ("ReadFilesFromDirectory", ReadFilesFromDirectory),
                         ("WatchDirectory", WatchDirectory),
                         ("DeleteFile", DeleteFile),
+                        ("DownloadThenWriteToDirectory", DownloadThenWriteToDirectory),
                         ("Exit", () => { exit = true; }
                 )
                     );
@@ -80,6 +81,19 @@ namespace DirectoryWatchDog
             $"{result.Sucess} - {result.ErrorValue}".Print(ConsoleColor.Yellow);
         }
 
+        static void DownloadThenWriteToDirectory()
+        {
+            var url = ReadInput("Please enter the url to download from:");
+            var fileName = ReadInput("Please enter the file name:");
+            var directoryPath = ReadInput("Please enter the directory path:");
+
+            fileName = GetFileNameIfEmpty(url, fileName);
+
+            var result = DirectoryManager.DownloadThenWriteToDirectoryFP(url, fileName, directoryPath);
+
+            $"{result.Sucess} - {result.ErrorValue}".Print(ConsoleColor.Yellow);
+        }
+
         static void WatchDirectory()
         {
             var directoryPath = ReadInput("Please enter directory path:");
@@ -90,6 +104,9 @@ namespace DirectoryWatchDog
 
             $"{result.Sucess} - {result.ErrorValue}".Print(ConsoleColor.Yellow);
         }
+
+        private static string GetFileNameIfEmpty(string url, string fileName) =>
+            fileName.NotEmpty() ? fileName : url.Split('/').Last();
 
         private static string ReadInput(string message)
         {
