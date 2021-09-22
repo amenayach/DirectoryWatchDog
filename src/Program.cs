@@ -86,10 +86,11 @@ namespace DirectoryWatchDog
             var url = ReadInput("Please enter the url to download from:");
             var fileName = ReadInput("Please enter the file name:");
             var directoryPath = ReadInput("Please enter the directory path:");
+            var proxy = ReadInput("Please enter the proxy address:");
 
             fileName = GetFileNameIfEmpty(url, fileName);
 
-            var result = DirectoryManager.DownloadThenWriteToDirectoryFP(url, fileName, directoryPath);
+            var result = DirectoryManager.DownloadThenWriteToDirectoryFP(url, fileName, directoryPath, proxy);
 
             $"{result.Sucess} - {result.ErrorValue}".Print(ConsoleColor.Yellow);
         }

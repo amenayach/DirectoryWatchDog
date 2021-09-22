@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -159,11 +160,11 @@ namespace DirectoryWatchDog
 
         /************************** DownloadThenWiteToDirectoryFP ************************/
 
-        public static Result<string, bool> DownloadThenWriteToDirectoryFP(string url, string fileName, string directoryPath) =>
+        public static Result<string, bool> DownloadThenWriteToDirectoryFP(string url, string fileName, string directoryPath, string proxy) =>
             NotEmpty(directoryPath)
             .Bind(m => NotEmpty(fileName))
             .Bind(m => DirExists(directoryPath))
-            .BindTo(m => DownloadFromUrl(url))
+            .BindTo(m => DownloadFromUrl(url, proxy))
             .Tee(m => File.WriteAllBytes(Path.Combine(directoryPath, new FileInfo(fileName).Name), m))
             .Map(ToBoolResult);
 
@@ -223,9 +224,17 @@ namespace DirectoryWatchDog
             }
         }
 
-        private static Result<string, byte[]> DownloadFromUrl(string url)
+        private static Result<string, byte[]> DownloadFromUrl(string url, string proxy)
         {
-            using (var httpClient = new HttpClient())
+            var useProxy = proxy.NotEmpty();
+
+            var handler = new HttpClientHandler
+            {
+                UseProxy = useProxy,
+                Proxy = useProxy ? new WebProxy(proxy) : null
+            };
+
+            using (var httpClient = new HttpClient(handler))
             {
                 var bytes = httpClient.GetByteArrayAsync(url).GetAwaiter().GetResult();
                 return bytes.Ok<string, byte[]>();
